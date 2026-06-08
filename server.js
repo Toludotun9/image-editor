@@ -1,4 +1,4 @@
-/* Prism Backend Server (Express + SQLite) */
+/* Dotun Backend Server (Express + SQLite) */
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -9,8 +9,8 @@ const fs = require('fs');
 
 const app = express();
 const PORT = 8000;
-const JWT_SECRET = process.env.JWT_SECRET || 'PRISM_SECURE_JWT_SECRET_KEY_2026';
-const DB_PATH = path.join(__dirname, 'prism.db');
+const JWT_SECRET = process.env.JWT_SECRET || 'DOTUN_SECURE_JWT_SECRET_KEY_2026';
+const DB_PATH = path.join(__dirname, 'dotun.db');
 
 // Enable parsing of JSON body payloads with large image capacity limits
 app.use(express.json({ limit: '50mb' }));
@@ -257,5 +257,5 @@ app.use((req, res) => {
 
 // Launch server listen listener
 app.listen(PORT, () => {
-    console.log(`Prism full-stack server is running at: http://localhost:${PORT}`);
+    console.log(`Dotun full-stack server is running at: http://localhost:${PORT}`);
 });

@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDraggingSplit = false;
     
     // Full-stack Authentication & Project states
-    let authToken = localStorage.getItem('prism_token') || null;
-    let loggedInUser = localStorage.getItem('prism_user') || null;
+    let authToken = localStorage.getItem('dotun_token') || null;
+    let loggedInUser = localStorage.getItem('dotun_user') || null;
     let currentProjectId = null;
     let authMode = 'login'; // 'login' or 'signup'
 
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawTree(60, canvas.height * 0.65, 80);
         drawTree(180, canvas.height * 0.68, 50);
 
-        fileName = "Prism-Sunset-Sample.png";
+        fileName = "Dotun-Sunset-Sample.png";
         fileType = "image/png";
         currentProjectId = null; // New project ID clear
         
@@ -1048,8 +1048,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Save JWT credentials locally
                     authToken = data.token;
                     loggedInUser = data.username;
-                    localStorage.setItem('prism_token', data.token);
-                    localStorage.setItem('prism_user', data.username);
+                    localStorage.setItem('dotun_token', data.token);
+                    localStorage.setItem('dotun_user', data.username);
                     
                     updateAuthUI();
                     closeAuthModal();
@@ -1079,8 +1079,8 @@ document.addEventListener('DOMContentLoaded', () => {
         authToken = null;
         loggedInUser = null;
         currentProjectId = null;
-        localStorage.removeItem('prism_token');
-        localStorage.removeItem('prism_user');
+        localStorage.removeItem('dotun_token');
+        localStorage.removeItem('dotun_user');
         
         updateAuthUI();
         alert('You have logged out.');
