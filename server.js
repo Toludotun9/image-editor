@@ -16,7 +16,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve frontend assets statically
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
 // ----------------------------------------------------
 // Database Initialization & Migrations (SQLite or Pure JS Fallback)
@@ -353,7 +353,7 @@ app.delete('/api/projects/:id', authenticateToken, (req, res) => {
 
 // Fallback to index.html for undefined front routes (SPA friendly)
 app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
 });
 
 // Launch server listen listener

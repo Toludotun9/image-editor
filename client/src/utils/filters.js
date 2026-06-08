@@ -1,10 +1,10 @@
-/* Prism Core Image-Processing Filter Pipeline */
+/* Dotun Core Image-Processing Filter Pipeline (ES6 Module) */
 
 /**
  * Converts RGB values to HSL spectrum.
  * @returns {number[]} [Hue (0-360), Saturation (0-100), Lightness (0-100)]
  */
-function rgbToHsl(r, g, b) {
+export function rgbToHsl(r, g, b) {
     r /= 255; g /= 255; b /= 255;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
@@ -28,7 +28,7 @@ function rgbToHsl(r, g, b) {
  * Converts HSL back to RGB.
  * @returns {number[]} [Red (0-255), Green (0-255), Blue (0-255)]
  */
-function hslToRgb(h, s, l) {
+export function hslToRgb(h, s, l) {
     h /= 360; s /= 100; l /= 100;
     let r, g, b;
 
@@ -59,7 +59,7 @@ function hslToRgb(h, s, l) {
 /**
  * Creates a Duotone Shadow-Highlight lookup table.
  */
-function createDuotoneLUT(shadowHex, highlightHex) {
+export function createDuotoneLUT(shadowHex, highlightHex) {
     const parseHex = (hex) => {
         const cleaned = hex.replace('#', '');
         return {
@@ -84,9 +84,8 @@ function createDuotoneLUT(shadowHex, highlightHex) {
 /**
  * 3x3 Convolution filter algorithm for Image Sharpening.
  */
-function applySharpenConvolution(srcData, dstData, w, h, strength) {
+export function applySharpenConvolution(srcData, dstData, w, h, strength) {
     const factor = strength / 100;
-    // Sharpen kernel definition: center is 1 + 4*factor, edges are -factor
     const kCenter = 1 + 4 * factor;
     const kEdge = -factor;
     
@@ -96,12 +95,6 @@ function applySharpenConvolution(srcData, dstData, w, h, strength) {
             
             let r = 0, g = 0, b = 0;
             
-            // Perform 3x3 convolution
-            // Indexes for neighbors:
-            // [idx - w*4 - 4] [idx - w*4] [idx - w*4 + 4]
-            // [idx - 4]       [idx]       [idx + 4]
-            // [idx + w*4 - 4] [idx + w*4] [idx + w*4 + 4]
-            
             const nIdx = [
                 (y - 1) * w + x,     // Top
                 y * w + (x - 1),     // Left
@@ -109,13 +102,10 @@ function applySharpenConvolution(srcData, dstData, w, h, strength) {
                 (y + 1) * w + x      // Bottom
             ].map(v => v * 4);
             
-            // Red Channel
             r = srcData[idx] * kCenter + 
                 (srcData[nIdx[0]] + srcData[nIdx[1]] + srcData[nIdx[2]] + srcData[nIdx[3]]) * kEdge;
-            // Green Channel
             g = srcData[idx + 1] * kCenter + 
                 (srcData[nIdx[0] + 1] + srcData[nIdx[1] + 1] + srcData[nIdx[2] + 1] + srcData[nIdx[3] + 1]) * kEdge;
-            // Blue Channel
             b = srcData[idx + 2] * kCenter + 
                 (srcData[nIdx[0] + 2] + srcData[nIdx[1] + 2] + srcData[nIdx[2] + 2] + srcData[nIdx[3] + 2]) * kEdge;
             
@@ -130,12 +120,11 @@ function applySharpenConvolution(srcData, dstData, w, h, strength) {
 /**
  * Main application filter compiler. Processes CPU and canvas operations.
  */
-function applyPrismFilters(sourceCanvas, targetCanvas, state) {
+export function applyDotunFilters(sourceCanvas, targetCanvas, state) {
     const w = sourceCanvas.width;
     const h = sourceCanvas.height;
     if (w === 0 || h === 0) return;
     
-    // Ensure target canvas dimensions match source canvas
     if (targetCanvas.width !== w || targetCanvas.height !== h) {
         targetCanvas.width = w;
         targetCanvas.height = h;
@@ -144,10 +133,8 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
     const srcCtx = sourceCanvas.getContext('2d');
     const dstCtx = targetCanvas.getContext('2d');
     
-    // Clear destination
     dstCtx.clearRect(0, 0, w, h);
     
-    // Grab source pixel data
     let srcImgData;
     try {
         srcImgData = srcCtx.getImageData(0, 0, w, h);
@@ -162,7 +149,6 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
     
     const len = srcData.length;
     
-    // Pre-calculate adjustments values
     const exposureFactor = Math.pow(2, state.exposure / 50);
     const contrastFactor = (259 * (state.contrast + 255)) / (255 * (259 - state.contrast));
     const satFactor = (state.saturation + 100) / 100;
@@ -170,19 +156,17 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
     const tempVal = state.temperature * 0.4;
     const tintVal = state.tint * 0.4;
     const vignetteAmount = state.vignette / 100;
-    const chromaticOffset = Math.round(state.chromatic * (w / 1200)); // Relate offset to canvas width
+    const chromaticOffset = Math.round(state.chromatic * (w / 1200));
     
     const centerX = w / 2;
     const centerY = h / 2;
     const maxDist = Math.sqrt(centerX * centerX + centerY * centerY) || 1;
     
-    // Check if Duotone is active
     let duotoneLUT = null;
     if (state.duotoneToggle) {
         duotoneLUT = createDuotoneLUT(state.duotoneShadow, state.duotoneHighlight);
     }
     
-    // Check if HSL has non-zero states
     let hasHsl = false;
     for (const color in state.hsl) {
         const { h, s, l } = state.hsl[color];
@@ -192,9 +176,7 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
         }
     }
     
-    // ----------------------------------------------------
     // Primary Pass: CPU Pixel Loops
-    // ----------------------------------------------------
     for (let i = 0; i < len; i += 4) {
         const idx = i;
         const x = (idx / 4) % w;
@@ -202,7 +184,6 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
         
         let r, g, b;
         
-        // 1. Chromatic Aberration channel offset
         if (chromaticOffset > 0) {
             const rx = Math.max(0, Math.min(w - 1, x - chromaticOffset));
             const bx = Math.max(0, Math.min(w - 1, x + chromaticOffset));
@@ -215,7 +196,6 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
             b = srcData[idx + 2];
         }
         
-        // 2. Duotone
         if (state.duotoneToggle && duotoneLUT) {
             const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
             r = duotoneLUT[gray * 3];
@@ -223,12 +203,10 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
             b = duotoneLUT[gray * 3 + 2];
         }
         
-        // 3. Isolated HSL ranges
         if (hasHsl) {
             let [hue, sat, light] = rgbToHsl(r, g, b);
             let band = null;
             
-            // Map Hue angle to 8 channels
             if (hue >= 345 || hue < 15) band = 'red';
             else if (hue >= 15 && hue < 45) band = 'orange';
             else if (hue >= 45 && hue < 75) band = 'yellow';
@@ -247,28 +225,24 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
             }
         }
         
-        // 4. Exposure
         if (state.exposure !== 0) {
             r *= exposureFactor;
             g *= exposureFactor;
             b *= exposureFactor;
         }
         
-        // 5. Contrast
         if (state.contrast !== 0) {
             r = contrastFactor * (r - 128) + 128;
             g = contrastFactor * (g - 128) + 128;
             b = contrastFactor * (b - 128) + 128;
         }
         
-        // 6. Clarity (Midtone sine wave contrast)
         if (state.clarity !== 0) {
             r += Math.sin((r / 255) * Math.PI) * clarityAmount;
             g += Math.sin((g / 255) * Math.PI) * clarityAmount;
             b += Math.sin((b / 255) * Math.PI) * clarityAmount;
         }
         
-        // 7. Saturation
         if (state.saturation !== 0) {
             const gray = 0.299 * r + 0.587 * g + 0.114 * b;
             r = gray + (r - gray) * satFactor;
@@ -276,14 +250,12 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
             b = gray + (b - gray) * satFactor;
         }
         
-        // 8. Temperature & Tint
         if (state.temperature !== 0 || state.tint !== 0) {
             r += tempVal * 0.5 + tintVal * 0.2;
             g += tintVal * -0.5;
             b += tempVal * -0.5 + tintVal * 0.2;
         }
         
-        // 9. Vignette (Center distance scaling)
         if (state.vignette !== 0) {
             const dx = x - centerX;
             const dy = y - centerY;
@@ -294,30 +266,22 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
             b *= vignetteFactor;
         }
         
-        // Clamp and save to buffer
         dstData[idx]     = r < 0 ? 0 : (r > 255 ? 255 : r);
         dstData[idx + 1] = g < 0 ? 0 : (g > 255 ? 255 : g);
         dstData[idx + 2] = b < 0 ? 0 : (b > 255 ? 255 : b);
-        dstData[idx + 3] = srcData[idx + 3]; // Maintain alpha
+        dstData[idx + 3] = srcData[idx + 3];
     }
     
-    // Draw initial pass data to destination canvas
     dstCtx.putImageData(dstImgData, 0, 0);
     
-    // ----------------------------------------------------
     // Secondary Pass: Spatial / Multi-Stage Convolution
-    // ----------------------------------------------------
-    
-    // 10. Convolution Sharpening (Executed in place using helper)
     if (state.sharpen > 0) {
         const sharpenBuffer = dstCtx.getImageData(0, 0, w, h);
         applySharpenConvolution(sharpenBuffer.data, dstImgData.data, w, h, state.sharpen);
         dstCtx.putImageData(dstImgData, 0, 0);
     }
     
-    // 11. Hardware-Accelerated Gaussian Blur (Using Canvas 2D filters)
     if (state.blur > 0) {
-        // Create an intermediate copy
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = w;
         tempCanvas.height = h;
@@ -327,10 +291,9 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
         dstCtx.clearRect(0, 0, w, h);
         dstCtx.filter = `blur(${state.blur * 0.15}px)`;
         dstCtx.drawImage(tempCanvas, 0, 0);
-        dstCtx.filter = 'none'; // Reset filter
+        dstCtx.filter = 'none';
     }
     
-    // 12. Glitch horizontal slice displacement
     if (state.glitch > 0) {
         const sliceCount = Math.floor(state.glitch / 6) + 2;
         const tempCanvas = document.createElement('canvas');
@@ -342,17 +305,15 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
         for (let i = 0; i < sliceCount; i++) {
             const sy = Math.random() * h;
             const sh = Math.random() * (h / 8) + 15;
-            const disp = (Math.random() - 0.5) * (state.glitch * (w / 400)); // Relative displacement
+            const disp = (Math.random() - 0.5) * (state.glitch * (w / 400));
             dstCtx.drawImage(tempCanvas, 0, sy, w, sh, disp, sy, w, sh);
         }
     }
     
-    // 13. Halftone Pop-art circle grid
     if (state.halftone > 0) {
         applyHalftoneEffect(dstCtx, w, h, state.halftone);
     }
     
-    // 14. ASCII Character Terminal Matrix (Final render state)
     if (state.asciiToggle) {
         applyAsciiEffect(dstCtx, w, h, state.asciiSize);
     }
@@ -361,7 +322,7 @@ function applyPrismFilters(sourceCanvas, targetCanvas, state) {
 /**
  * Halftone matrix converter.
  */
-function applyHalftoneEffect(ctx, w, h, strength) {
+export function applyHalftoneEffect(ctx, w, h, strength) {
     const dotSize = Math.max(4, Math.floor(strength / 4));
     
     const tempCanvas = document.createElement('canvas');
@@ -373,7 +334,6 @@ function applyHalftoneEffect(ctx, w, h, strength) {
     const imgData = tempCtx.getImageData(0, 0, w, h);
     const data = imgData.data;
     
-    // Fill background with dark theme slate
     ctx.fillStyle = '#06090e';
     ctx.fillRect(0, 0, w, h);
     
@@ -382,7 +342,6 @@ function applyHalftoneEffect(ctx, w, h, strength) {
             let rSum = 0, gSum = 0, bSum = 0;
             let count = 0;
             
-            // Accumulate color averages in the cell grid
             for (let cy = 0; cy < dotSize && y + cy < h; cy++) {
                 for (let cx = 0; cx < dotSize && x + cx < w; cx++) {
                     const idx = ((y + cy) * w + (x + cx)) * 4;
@@ -398,7 +357,6 @@ function applyHalftoneEffect(ctx, w, h, strength) {
             const b = bSum / count;
             const brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
             
-            // Draw circle with radius based on brightness
             const radius = (dotSize / 2) * brightness * 1.3;
             if (radius > 0.4) {
                 ctx.beginPath();
@@ -413,7 +371,7 @@ function applyHalftoneEffect(ctx, w, h, strength) {
 /**
  * ASCII text converter.
  */
-function applyAsciiEffect(ctx, w, h, fontSize) {
+export function applyAsciiEffect(ctx, w, h, fontSize) {
     const charWidth = fontSize;
     const charHeight = fontSize;
     
@@ -438,7 +396,6 @@ function applyAsciiEffect(ctx, w, h, fontSize) {
     
     for (let y = 0; y < h; y += charHeight) {
         for (let x = 0; x < w; x += charWidth) {
-            // Find center coordinates of cell
             const cx = Math.min(w - 1, x + Math.floor(charWidth / 2));
             const cy = Math.min(h - 1, y + Math.floor(charHeight / 2));
             const idx = (cy * w + cx) * 4;
@@ -448,7 +405,6 @@ function applyAsciiEffect(ctx, w, h, fontSize) {
             const b = data[idx + 2];
             const gray = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
             
-            // Map gray intensity [0-1] to character density indices (dense characters for highlights, empty for shadows)
             const charIdx = Math.floor((1 - gray) * (charLen - 1));
             const char = chars[charIdx];
             

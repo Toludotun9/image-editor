@@ -1,6 +1,6 @@
-/* Prism Preset Configurations */
+/* Dotun React Preset Configurations */
 
-const PRISM_DEFAULT_STATE = {
+export const DOTUN_DEFAULT_STATE = {
     exposure: 0,
     contrast: 0,
     clarity: 0,
@@ -35,13 +35,13 @@ const PRISM_DEFAULT_STATE = {
     duotoneHighlight: '#ff9d00'
 };
 
-const PRISM_PRESETS = {
+export const DOTUN_PRESETS = {
     original: {
-        ...PRISM_DEFAULT_STATE
+        ...DOTUN_DEFAULT_STATE
     },
     
     cyberpunk: {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         contrast: 15,
         clarity: 25,
         saturation: 40,
@@ -53,14 +53,14 @@ const PRISM_PRESETS = {
         duotoneShadow: '#1a0033',
         duotoneHighlight: '#00f2fe',
         hsl: {
-            ...PRISM_DEFAULT_STATE.hsl,
+            ...DOTUN_DEFAULT_STATE.hsl,
             blue: { h: 10, s: 30, l: 10 },
             purple: { h: -10, s: 40, l: 15 }
         }
     },
     
     'warm-autumn': {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         exposure: 5,
         contrast: 12,
         clarity: 15,
@@ -69,7 +69,7 @@ const PRISM_PRESETS = {
         tint: 5,
         vignette: 20,
         hsl: {
-            ...PRISM_DEFAULT_STATE.hsl,
+            ...DOTUN_DEFAULT_STATE.hsl,
             red: { h: 5, s: 25, l: 5 },
             orange: { h: -5, s: 35, l: 10 },
             yellow: { h: -10, s: 20, l: 5 },
@@ -78,7 +78,7 @@ const PRISM_PRESETS = {
     },
     
     'nordic-cold': {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         exposure: 8,
         contrast: 8,
         clarity: 18,
@@ -87,7 +87,7 @@ const PRISM_PRESETS = {
         tint: -5,
         vignette: 15,
         hsl: {
-            ...PRISM_DEFAULT_STATE.hsl,
+            ...DOTUN_DEFAULT_STATE.hsl,
             blue: { h: -5, s: 35, l: 10 },
             cyan: { h: 5, s: 20, l: 5 },
             red: { h: 0, s: -20, l: -5 }
@@ -95,7 +95,7 @@ const PRISM_PRESETS = {
     },
     
     'emerald-dream': {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         contrast: 10,
         clarity: 15,
         saturation: 15,
@@ -106,25 +106,25 @@ const PRISM_PRESETS = {
         duotoneShadow: '#022118',
         duotoneHighlight: '#34d399',
         hsl: {
-            ...PRISM_DEFAULT_STATE.hsl,
+            ...DOTUN_DEFAULT_STATE.hsl,
             green: { h: 10, s: 30, l: 5 }
         }
     },
     
     'mono-silhouette': {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         exposure: -5,
         contrast: 40,
         clarity: 30,
         saturation: -100,
         vignette: 35,
         hsl: {
-            ...PRISM_DEFAULT_STATE.hsl
+            ...DOTUN_DEFAULT_STATE.hsl
         }
     },
     
     'vintage-vhs': {
-        ...PRISM_DEFAULT_STATE,
+        ...DOTUN_DEFAULT_STATE,
         exposure: 2,
         contrast: -15,
         clarity: 5,
