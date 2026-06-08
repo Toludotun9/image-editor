@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism // Premium Photo Editor</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="prism-app">
+    <!-- Top Navigation Bar -->
+    <header class="prism-header">
+        <div class="header-logo">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 2 22 22 22" stroke-linejoin="round" stroke-linecap="round"/>
+                <polygon points="12 7 6 17 18 17" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <span class="logo-text">PRISM</span>
+            <span class="logo-version">v1.0</span>
+        </div>
+
+        <div class="header-actions">
+            <!-- Undo / Redo -->
+            <div class="action-group">
+                <button id="btn-undo" class="icon-button" title="Undo (Ctrl+Z)" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                </button>
+                <button id="btn-redo" class="icon-button" title="Redo (Ctrl+Y)" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+                </button>
+            </div>
+
+            <!-- Compare Mode -->
+            <button id="btn-compare" class="icon-button toggle-button" title="Toggle Split View Compare">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/>
+                </svg>
+            </button>
+
+            <!-- Reset -->
+            <button id="btn-reset" class="text-button warning" title="Reset all changes">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+                Reset
+            </button>
+
+            <!-- Image Input Triggers -->
+            <button id="btn-upload-trigger" class="text-button primary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Open Image
+                <input type="file" id="image-loader" accept="image/*" style="display: none;">
+            </button>
+            <button id="btn-load-sample" class="text-button secondary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                Sample Image
+            </button>
+
+            <!-- Export Modal Trigger -->
+            <button id="btn-export-trigger" class="text-button accent" disabled>
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 17l4 4 4-4M12 12v9M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>
+                Export
+            </button>
+
+            <!-- Authentication Controls -->
+            <div class="auth-section" id="auth-unauthenticated">
+                <button id="btn-signup-trigger" class="auth-btn signup">Sign up</button>
+                <button id="btn-login-trigger" class="auth-btn login">Log in</button>
+            </div>
+            
+            <div class="auth-section" id="auth-authenticated" style="display: none;">
+                <span class="user-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="user-icon"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="user-display-name">User</span>
+                </span>
+                <button id="btn-cloud-save" class="text-button secondary" title="Save project to database" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 01-2 2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Cloud Save
+                </button>
+                <button id="btn-my-gallery" class="text-button secondary" title="Open saved projects gallery">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Gallery
+                </button>
+                <button id="btn-logout" class="icon-button" title="Log out">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 01-2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Workspace Grid -->
+    <main class="prism-main">
+        <!-- Sidebar Left: Adjustments & Controls -->
+        <aside class="prism-sidebar sidebar-left">
+            <!-- Sidebar Panel Tabs -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="tab-adjust">Adjust</button>
+                <button class="tab-btn" data-tab="tab-hsl">HSL Color</button>
+                <button class="tab-btn" data-tab="tab-creative">Creative</button>
+            </div>
+
+            <!-- Tab Content: Basic Adjustments -->
+            <div id="tab-adjust" class="tab-content active">
+                <div class="control-group">
+                    <h3>Light & Detail</h3>
+                    
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Exposure</span>
+                            <span class="slider-value" id="val-exposure">0</span>
+                        </div>
+                        <input type="range" id="exposure" min="-100" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Contrast</span>
+                            <span class="slider-value" id="val-contrast">0</span>
+                        </div>
+                        <input type="range" id="contrast" min="-100" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Clarity</span>
+                            <span class="slider-value" id="val-clarity">0</span>
+                        </div>
+                        <input type="range" id="clarity" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Color Tone</h3>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Saturation</span>
+                            <span class="slider-value" id="val-saturation">0</span>
+                        </div>
+                        <input type="range" id="saturation" min="-100" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Temperature</span>
+                            <span class="slider-value" id="val-temperature">0</span>
+                        </div>
+                        <input type="range" id="temperature" min="-100" max="100" value="0" class="prism-slider color-temp">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Tint</span>
+                            <span class="slider-value" id="val-tint">0</span>
+                        </div>
+                        <input type="range" id="tint" min="-100" max="100" value="0" class="prism-slider color-tint">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Effects & Framing</h3>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Vignette</span>
+                            <span class="slider-value" id="val-vignette">0</span>
+                        </div>
+                        <input type="range" id="vignette" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Blur</span>
+                            <span class="slider-value" id="val-blur">0</span>
+                        </div>
+                        <input type="range" id="blur" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Sharpen</span>
+                            <span class="slider-value" id="val-sharpen">0</span>
+                        </div>
+                        <input type="range" id="sharpen" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: HSL Color Channels -->
+            <div id="tab-hsl" class="tab-content">
+                <div class="control-group">
+                    <h3>HSL Color Tuner</h3>
+                    <p class="section-desc">Adjust Hue, Saturation, and Lightness for isolated color bands.</p>
+                    
+                    <div class="color-band-selector">
+                        <button class="band-btn active" data-color="red" style="--band-color: #ef4444;" title="Red"></button>
+                        <button class="band-btn" data-color="orange" style="--band-color: #f97316;" title="Orange"></button>
+                        <button class="band-btn" data-color="yellow" style="--band-color: #eab308;" title="Yellow"></button>
+                        <button class="band-btn" data-color="green" style="--band-color: #22c55e;" title="Green"></button>
+                        <button class="band-btn" data-color="cyan" style="--band-color: #06b6d4;" title="Cyan"></button>
+                        <button class="band-btn" data-color="blue" style="--band-color: #3b82f6;" title="Blue"></button>
+                        <button class="band-btn" data-color="purple" style="--band-color: #a855f7;" title="Purple"></button>
+                        <button class="band-btn" data-color="magenta" style="--band-color: #ec4899;" title="Magenta"></button>
+                    </div>
+
+                    <div class="hsl-sliders-container">
+                        <h4 class="band-title">Red Channel Controls</h4>
+                        
+                        <div class="slider-wrapper">
+                            <div class="slider-label">
+                                <span>Hue Shift</span>
+                                <span class="slider-value" id="val-hsl-h">0</span>
+                            </div>
+                            <input type="range" id="hsl-h" min="-180" max="180" value="0" class="prism-slider hsl-h-track">
+                        </div>
+
+                        <div class="slider-wrapper">
+                            <div class="slider-label">
+                                <span>Saturation</span>
+                                <span class="slider-value" id="val-hsl-s">0</span>
+                            </div>
+                            <input type="range" id="hsl-s" min="-100" max="100" value="0" class="prism-slider">
+                        </div>
+
+                        <div class="slider-wrapper">
+                            <div class="slider-label">
+                                <span>Lightness</span>
+                                <span class="slider-value" id="val-hsl-l">0</span>
+                            </div>
+                            <input type="range" id="hsl-l" min="-100" max="100" value="0" class="prism-slider">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Creative Effects -->
+            <div id="tab-creative" class="tab-content">
+                <div class="control-group">
+                    <h3>Glitch & Cyber</h3>
+                    
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Glitch Strength</span>
+                            <span class="slider-value" id="val-glitch">0</span>
+                        </div>
+                        <input type="range" id="glitch" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Chromatic Aberration</span>
+                            <span class="slider-value" id="val-chromatic">0</span>
+                        </div>
+                        <input type="range" id="chromatic" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Creative Rendering</h3>
+
+                    <div class="slider-wrapper">
+                        <div class="slider-label">
+                            <span>Halftone Dots</span>
+                            <span class="slider-value" id="val-halftone">0</span>
+                        </div>
+                        <input type="range" id="halftone" min="0" max="100" value="0" class="prism-slider">
+                    </div>
+
+                    <!-- ASCII Mode Toggle -->
+                    <div class="toggle-wrapper">
+                        <div class="toggle-info">
+                            <span class="toggle-title">ASCII Matrix Effect</span>
+                            <span class="toggle-desc">Convert image to colored text character grid</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="ascii-toggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="slider-wrapper ascii-control" style="opacity: 0.4; pointer-events: none;">
+                        <div class="slider-label">
+                            <span>ASCII Font Size</span>
+                            <span class="slider-value" id="val-ascii-size">8px</span>
+                        </div>
+                        <input type="range" id="ascii-size" min="6" max="24" value="8" class="prism-slider">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Duotone Gradient</h3>
+                    
+                    <div class="toggle-wrapper">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Duotone Filter</span>
+                            <span class="toggle-desc">Remap tones between two custom colors</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="duotone-toggle">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="duotone-controls" style="opacity: 0.4; pointer-events: none; margin-top: 15px;">
+                        <div class="color-pickers-row">
+                            <div class="color-picker-item">
+                                <label for="duotone-shadow">Shadows</label>
+                                <div class="color-picker-preview" style="background-color: #1e0b36;">
+                                    <input type="color" id="duotone-shadow" value="#1e0b36">
+                                </div>
+                            </div>
+                            <div class="color-picker-item">
+                                <label for="duotone-highlight">Highlights</label>
+                                <div class="color-picker-preview" style="background-color: #ff9d00;">
+                                    <input type="color" id="duotone-highlight" value="#ff9d00">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="duotone-presets">
+                            <span class="presets-title">Presets:</span>
+                            <div class="presets-row">
+                                <button class="duotone-preset-btn" data-s="#1e0b36" data-h="#ff9d00" style="background: linear-gradient(135deg, #1e0b36, #ff9d00)" title="Cyberpunk Tangerine"></button>
+                                <button class="duotone-preset-btn" data-s="#021b18" data-h="#00ffcc" style="background: linear-gradient(135deg, #021b18, #00ffcc)" title="Toxic Cyan"></button>
+                                <button class="duotone-preset-btn" data-s="#2b003a" data-h="#ff007c" style="background: linear-gradient(135deg, #2b003a, #ff007c)" title="Synthwave Fuchsia"></button>
+                                <button class="duotone-preset-btn" data-s="#0f2027" data-h="#2c5364" style="background: linear-gradient(135deg, #0f2027, #2c5364)" title="Deep Oceanic"></button>
+                                <button class="duotone-preset-btn" data-s="#3f0f0f" data-h="#f5af19" style="background: linear-gradient(135deg, #3f0f0f, #f5af19)" title="Fire Glow"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Workspace: Canvas Viewport -->
+        <section class="prism-workspace" id="workspace-container">
+            <!-- Drag & Drop Overlay / Initial Screen -->
+            <div class="upload-dropzone" id="dropzone">
+                <div class="dropzone-box">
+                    <div class="dropzone-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <h2>Bring your canvas to life</h2>
+                    <p>Drag & drop any image here, paste from your clipboard, or select an option above.</p>
+                    <div class="dropzone-buttons">
+                        <button class="text-button primary" onclick="document.getElementById('image-loader').click()">Browse Files</button>
+                        <button class="text-button secondary" id="btn-load-sample-center">Load Sample</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Viewport Wrapper (Visible only when image loaded) -->
+            <div class="canvas-viewport" id="canvas-viewport" style="display: none;">
+                <div class="canvas-wrapper" id="canvas-wrapper">
+                    <!-- Base/Original Image Canvas (Hidden, used for Split view comparison) -->
+                    <canvas id="original-canvas" style="display: none;"></canvas>
+                    
+                    <!-- Main Display Layer: Outputs current processing states -->
+                    <canvas id="display-canvas"></canvas>
+
+                    <!-- Split Compare Overlay Element -->
+                    <div class="split-slider-line" id="split-line" style="display: none;">
+                        <div class="split-handle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M8 9l-4 3 4 3M16 9l4 3-4 3"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls Overlay (Floating bottom center) -->
+                <div class="viewport-controls">
+                    <button id="btn-zoom-out" class="icon-button" title="Zoom Out (Ctrl+Minus)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <span id="zoom-factor" class="zoom-display">100%</span>
+                    <button id="btn-zoom-in" class="icon-button" title="Zoom In (Ctrl+Plus)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button id="btn-fit-screen" class="icon-button" title="Fit to Screen (Ctrl+0)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 9v12M3 15V3M21 3l-7 7M3 21l7-7"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sidebar Right: Analytics, Presets, and History -->
+        <aside class="prism-sidebar sidebar-right">
+            <!-- Section: Real-time Histogram -->
+            <div class="sidebar-section panel-histogram">
+                <div class="section-header">
+                    <h3>Real-time Histogram</h3>
+                    <div class="histogram-legend">
+                        <span class="legend-dot r">R</span>
+                        <span class="legend-dot g">G</span>
+                        <span class="legend-dot b">B</span>
+                        <span class="legend-dot w">L</span>
+                    </div>
+                </div>
+                <div class="histogram-container">
+                    <canvas id="histogram-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Section: Preset Gallery -->
+            <div class="sidebar-section panel-presets">
+                <h3>Presets</h3>
+                <div class="presets-grid">
+                    <button class="preset-card active" data-preset="original">
+                        <div class="preset-preview raw-preview"></div>
+                        <span class="preset-name">Original</span>
+                    </button>
+                    <button class="preset-card" data-preset="cyberpunk">
+                        <div class="preset-preview cyberpunk-preview"></div>
+                        <span class="preset-name">Cyberpunk</span>
+                    </button>
+                    <button class="preset-card" data-preset="warm-autumn">
+                        <div class="preset-preview warm-autumn-preview"></div>
+                        <span class="preset-name">Warm Autumn</span>
+                    </button>
+                    <button class="preset-card" data-preset="nordic-cold">
+                        <div class="preset-preview nordic-cold-preview"></div>
+                        <span class="preset-name">Nordic Cold</span>
+                    </button>
+                    <button class="preset-card" data-preset="emerald-dream">
+                        <div class="preset-preview emerald-preview"></div>
+                        <span class="preset-name">Emerald Dream</span>
+                    </button>
+                    <button class="preset-card" data-preset="mono-silhouette">
+                        <div class="preset-preview mono-preview"></div>
+                        <span class="preset-name">Mono Dark</span>
+                    </button>
+                    <button class="preset-card" data-preset="vintage-vhs">
+                        <div class="preset-preview vhs-preview"></div>
+                        <span class="preset-name">Retro VHS</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section: Applied Adjustments Log / Pipeline -->
+            <div class="sidebar-section panel-history flex-grow">
+                <h3>Applied Pipelines</h3>
+                <div class="applied-list" id="applied-pipeline-list">
+                    <div class="pipeline-empty">No active adjustments</div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Bottom Status Bar -->
+    <footer class="prism-statusbar">
+        <div class="status-left">
+            <span id="status-filename">No image loaded</span>
+            <span class="status-divider">|</span>
+            <span id="status-resolution">0 x 0 px</span>
+        </div>
+        <div class="status-right">
+            <span>Drag mouse to Pan canvas • Scroll to Zoom</span>
+        </div>
+    </footer>
+
+    <!-- Export Configurations Modal -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Export Settings</h2>
+                <button class="modal-close" id="btn-close-export">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="control-group">
+                    <div class="input-row">
+                        <label for="export-format">File Format</label>
+                        <select id="export-format" class="prism-select">
+                            <option value="image/png">PNG (.png) — Lossless</option>
+                            <option value="image/jpeg" selected>JPEG (.jpg) — Balanced</option>
+                            <option value="image/webp">WebP (.webp) — Next-gen compression</option>
+                        </select>
+                    </div>
+
+                    <div class="slider-wrapper" id="jpeg-quality-wrapper">
+                        <div class="slider-label">
+                            <span>Compression Quality</span>
+                            <span class="slider-value" id="val-export-quality">90%</span>
+                        </div>
+                        <input type="range" id="export-quality" min="10" max="100" value="90" class="prism-slider">
+                    </div>
+
+                    <div class="input-row">
+                        <label for="export-scale">Output Resolution</label>
+                        <select id="export-scale" class="prism-select">
+                            <option value="1">1.0x (Standard Preview — <span id="lbl-scale-1x">? x ?</span>)</option>
+                            <option value="2">2.0x (High-Res Upscale — <span id="lbl-scale-2x">? x ?</span>)</option>
+                            <option value="0.5">0.5x (Downsampled — <span id="lbl-scale-05x">? x ?</span>)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="export-preview-card">
+                    <div class="preview-info">
+                        <span id="export-info-filename">untitled.jpg</span>
+                        <span id="export-info-details">JPEG • 90% Quality • Scale: 1x</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="text-button secondary" id="btn-cancel-export">Cancel</button>
+                <button class="text-button accent" id="btn-confirm-export">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download File
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentication Modal (Signup / Login) -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-box auth-box">
+            <div class="modal-header">
+                <h2 id="auth-modal-title">Log In</h2>
+                <button class="modal-close" id="btn-close-auth">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <form id="auth-form" class="modal-body" onsubmit="return false;">
+                <div class="input-row">
+                    <label for="auth-username">Username</label>
+                    <input type="text" id="auth-username" required placeholder="Enter username" class="prism-input" minlength="3">
+                </div>
+                
+                <div class="input-row">
+                    <label for="auth-password">Password</label>
+                    <input type="password" id="auth-password" required placeholder="Enter password" class="prism-input" minlength="5">
+                </div>
+                
+                <div id="auth-error-msg" class="auth-error-container" style="display: none;"></div>
+            </form>
+            
+            <div class="modal-footer">
+                <span class="auth-switch-prompt" id="auth-switch-prompt">
+                    Don't have an account? <a href="#" id="link-switch-auth">Sign up</a>
+                </span>
+                <button class="text-button primary" id="btn-submit-auth">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal (Cloud Saved Projects) -->
+    <div class="modal-overlay" id="gallery-modal">
+        <div class="modal-box gallery-box">
+            <div class="modal-header">
+                <h2>My Saved Projects</h2>
+                <button class="modal-close" id="btn-close-gallery">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Project Grid -->
+                <div class="gallery-grid" id="gallery-grid-list">
+                    <div class="gallery-empty">No projects saved yet. Edit an image and click Cloud Save!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script imports -->
+    <script src="presets.js"></script>
+    <script src="filters.js"></script>
+    <script src="histogram.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
