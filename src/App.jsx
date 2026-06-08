@@ -4,6 +4,7 @@ import './App.css';
 // Utilities
 import { DOTUN_DEFAULT_STATE, DOTUN_PRESETS } from './utils/presets';
 import { applyDotunFilters } from './utils/filters';
+import { localProjects } from './utils/db';
 
 // Components
 import Histogram from './components/Histogram';
@@ -425,15 +426,7 @@ export default function App() {
             thumbnail: thumbnailBase64
         };
 
-        fetch('/api/projects/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
+        localProjects.save(authToken, payload)
         .then(data => {
             if (data.success) {
                 setCurrentProjectId(data.projectId);
@@ -450,11 +443,7 @@ export default function App() {
     };
 
     const handleLoadSavedProject = (projectId) => {
-        fetch(`/api/projects/${projectId}`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        })
-        .then(res => res.json())
+        localProjects.getOne(authToken, projectId)
         .then(data => {
             if (data.success && data.project) {
                 const proj = data.project;

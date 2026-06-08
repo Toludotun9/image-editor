@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { localProjects } from '../utils/db';
 
 export default function GalleryModal({ isOpen, onClose, authToken, onLoadProject }) {
     const [projects, setProjects] = useState([]);
@@ -14,11 +15,7 @@ export default function GalleryModal({ isOpen, onClose, authToken, onLoadProject
     const fetchProjects = () => {
         setLoading(true);
         setErrorMsg('');
-        fetch('/api/projects', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        })
-        .then(res => res.json())
+        localProjects.getAll(authToken)
         .then(data => {
             setLoading(false);
             if (data.success) {
@@ -29,7 +26,7 @@ export default function GalleryModal({ isOpen, onClose, authToken, onLoadProject
         })
         .catch(err => {
             setLoading(false);
-            setErrorMsg('Connection error. Server may be down.');
+            setErrorMsg('Local projects fetch failed.');
             console.error('Gallery error:', err);
         });
     };
@@ -38,11 +35,7 @@ export default function GalleryModal({ isOpen, onClose, authToken, onLoadProject
         e.stopPropagation();
         if (!confirm('Are you sure you want to permanently delete this project?')) return;
 
-        fetch(`/api/projects/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        })
-        .then(res => res.json())
+        localProjects.delete(authToken, id)
         .then(data => {
             if (data.success) {
                 setProjects(projects.filter(p => p.id !== id));
@@ -51,7 +44,7 @@ export default function GalleryModal({ isOpen, onClose, authToken, onLoadProject
             }
         })
         .catch(err => {
-            alert('Delete connection error.');
+            alert('Delete operation error.');
             console.error('Delete error:', err);
         });
     };

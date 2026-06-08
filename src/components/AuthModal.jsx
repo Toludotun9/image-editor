@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { localAuth } from '../utils/db';
 
 export default function AuthModal({ isOpen, mode, onClose, onAuthSuccess }) {
     const [authMode, setAuthMode] = useState(mode); // 'login' or 'signup'
@@ -25,16 +26,11 @@ export default function AuthModal({ isOpen, mode, onClose, onAuthSuccess }) {
             return;
         }
 
-        const url = authMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
-        setLoading(true);
-        setErrorMsg('');
+        const authPromise = authMode === 'login' 
+            ? localAuth.login(trimmedUser, password) 
+            : localAuth.signup(trimmedUser, password);
 
-        fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: trimmedUser, password })
-        })
-        .then(res => res.json())
+        authPromise
         .then(data => {
             setLoading(false);
             if (data.success) {
@@ -53,7 +49,7 @@ export default function AuthModal({ isOpen, mode, onClose, onAuthSuccess }) {
         })
         .catch(err => {
             setLoading(false);
-            setErrorMsg('Network connection failed. Ensure server is running.');
+            setErrorMsg('Local authentication failed.');
             console.error('Auth error:', err);
         });
     };
