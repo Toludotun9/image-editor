@@ -1,7 +1,6 @@
-/* Dotun Backend Server (Express + SQLite) */
+/* Dotun Backend Server (Express + SQLite / Pure JS Fallback) */
 
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -20,16 +19,118 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
 // ----------------------------------------------------
-// Database Initialization & Migrations
+// Database Initialization & Migrations (SQLite or Pure JS Fallback)
 // ----------------------------------------------------
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) {
-        console.error('SQLite connection failure:', err.message);
-    } else {
-        console.log('Successfully connected to SQLite database:', DB_PATH);
-        runMigrations();
-    }
-});
+let db;
+let dbType = 'sqlite';
+
+// Fallback in-memory tables
+let inMemoryUsers = [];
+let inMemoryProjects = [];
+let nextUserId = 1;
+let nextProjectId = 1;
+
+try {
+    const sqlite3 = require('sqlite3').verbose();
+    db = new sqlite3.Database(DB_PATH, (err) => {
+        if (err) {
+            console.warn('SQLite connection failure. Falling back to in-memory database:', err.message);
+            setupInMemoryDB();
+        } else {
+            console.log('Successfully connected to SQLite database:', DB_PATH);
+            runMigrations();
+        }
+    });
+} catch (e) {
+    console.warn('Failed to load native sqlite3 bindings (common on serverless environments like Vercel). Gracefully falling back to pure JavaScript in-memory database store.');
+    setupInMemoryDB();
+}
+
+function setupInMemoryDB() {
+    dbType = 'memory';
+    db = {
+        serialize: (callback) => callback(),
+        run: function(query, params, callback) {
+            try {
+                const queryNormalized = query.trim().replace(/\s+/g, ' ');
+                if (queryNormalized.startsWith('INSERT INTO users')) {
+                    const [username, password] = params;
+                    const id = nextUserId++;
+                    inMemoryUsers.push({ id, username, password, created_at: new Date().toISOString() });
+                    if (callback) callback.call({ lastID: id }, null);
+                } else if (queryNormalized.startsWith('INSERT INTO projects')) {
+                    const [user_id, name, image_data, state, thumbnail] = params;
+                    const id = nextProjectId++;
+                    inMemoryProjects.push({ id, user_id, name, image_data, state, thumbnail, created_at: new Date().toISOString() });
+                    if (callback) callback.call({ lastID: id }, null);
+                } else if (queryNormalized.startsWith('UPDATE projects')) {
+                    const [name, image_data, state, thumbnail, id, user_id] = params;
+                    const proj = inMemoryProjects.find(p => p.id === parseInt(id) && p.user_id === parseInt(user_id));
+                    if (proj) {
+                        proj.name = name;
+                        proj.image_data = image_data;
+                        proj.state = state;
+                        proj.thumbnail = thumbnail;
+                        if (callback) callback.call({ changes: 1 }, null);
+                    } else {
+                        if (callback) callback.call({ changes: 0 }, null);
+                    }
+                } else if (queryNormalized.startsWith('DELETE FROM projects')) {
+                    const [id, user_id] = params;
+                    const initialLen = inMemoryProjects.length;
+                    inMemoryProjects = inMemoryProjects.filter(p => !(p.id === parseInt(id) && p.user_id === parseInt(user_id)));
+                    const changes = initialLen - inMemoryProjects.length;
+                    if (callback) callback.call({ changes }, null);
+                } else {
+                    if (callback) callback(null);
+                }
+            } catch (e) {
+                if (callback) callback(e);
+            }
+        },
+        get: function(query, params, callback) {
+            try {
+                const queryNormalized = query.trim().replace(/\s+/g, ' ');
+                if (queryNormalized.includes('FROM users WHERE username = ?')) {
+                    const [username] = params;
+                    const user = inMemoryUsers.find(u => u.username === username);
+                    if (callback) callback.call(null, user || null);
+                } else if (queryNormalized.includes('FROM projects WHERE id = ? AND user_id = ?')) {
+                    const [id, user_id] = params;
+                    const project = inMemoryProjects.find(p => p.id === parseInt(id) && p.user_id === parseInt(user_id));
+                    if (callback) callback.call(null, project || null);
+                } else {
+                    if (callback) callback(null, null);
+                }
+            } catch (e) {
+                if (callback) callback(e, null);
+            }
+        },
+        all: function(query, params, callback) {
+            try {
+                const queryNormalized = query.trim().replace(/\s+/g, ' ');
+                if (queryNormalized.includes('FROM projects WHERE user_id = ?')) {
+                    const [user_id] = params;
+                    const projects = inMemoryProjects
+                        .filter(p => p.user_id === parseInt(user_id))
+                        .map(p => ({
+                            id: p.id,
+                            name: p.name,
+                            thumbnail: p.thumbnail,
+                            created_at: p.created_at
+                        }))
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    if (callback) callback(null, projects);
+                } else {
+                    if (callback) callback(null, []);
+                }
+            } catch (e) {
+                if (callback) callback(e, null);
+            }
+        }
+    };
+    console.log('Pure JS in-memory database mock initialized successfully.');
+}
 
 function runMigrations() {
     db.serialize(() => {
